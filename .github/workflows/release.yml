@@ -1,0 +1,49 @@
+name: Release
+
+# 打 tag 触发：git tag v0.1.0 && git push --tags
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      # tauri-action 会自动跑 beforeBuildCommand（pnpm build）并带上 custom-protocol
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "AutoDarkMode ${{ github.ref_name }}"
+          releaseBody: |
+            Windows 11 自动深浅色切换工具。
+
+            下载 `AutoDarkMode_*_x64-setup.exe` 安装（当前用户级安装，不需要管理员）。
+            首次想用「管理员权限开机自启」时，在界面里点一次「授权并启用」即可，之后开机不再弹 UAC。
+          releaseDraft: true
+          prerelease: false

@@ -1,5 +1,9 @@
 # AutoDarkMode
 
+[![CI](https://github.com/DanielShuguang/auto-dark-mode/actions/workflows/ci.yml/badge.svg)](https://github.com/DanielShuguang/auto-dark-mode/actions/workflows/ci.yml)
+[![Release](https://github.com/DanielShuguang/auto-dark-mode/actions/workflows/release.yml/badge.svg)](https://github.com/DanielShuguang/auto-dark-mode/actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 Windows 11 自动深浅色切换：按固定时间或本地日出日落切换，托盘常驻、开机自启、无需管理员权限。
 
 **技术栈：Tauri 2 + Vue 3 + TypeScript + UnoCSS**（Rust 后端负责注册表/调度，Vue 负责设置界面，
@@ -142,6 +146,26 @@ Tauri 自动建窗口时，WebView2 数据目录固定为 `%LOCALAPPDATA%\<标�
 正常桌面环境第一个就成功，行为与默认一致；受限环境（沙箱、受控文件夹访问、
 受限令牌）则自动降级，不再直接崩溃——失败原因写进日志。
 
+## 持续集成与发布
+
+两个工作流都在 `.github/workflows/` 下，跑在 `windows-latest`：
+
+| 工作流 | 触发 | 做什么 |
+| --- | --- | --- |
+| `ci.yml` | push 到 main、PR、手动 | 装依赖 → `pnpm typecheck` → `pnpm build` → `cargo test` → `cargo clippy` |
+| `release.yml` | 打 `v*` tag、手动 | `tauri-action` 打 NSIS 安装包并创建 **草稿** Release |
+
+发版流程：
+
+```powershell
+# 先把版本号改成一致（package.json / src-tauri/tauri.conf.json / Cargo.toml）
+git tag v0.1.0
+git push --tags        # 触发 release.yml，几分钟后到 Releases 页面把草稿发出去
+```
+
+Rust 单元测试覆盖日出日落算法（`sun.rs` / `civil.rs` / `schedule.rs` / `geo.rs`），
+不依赖 Windows API，所以在 CI 上直接可跑。
+
 ## 已知风险
 
 - `bundle.targets` 设为 `nsis`，需要 WiX/NSIS 工具链；仅开发可忽略。
@@ -150,4 +174,4 @@ Tauri 自动建窗口时，WebView2 数据目录固定为 `%LOCALAPPDATA%\<标�
 
 ## 许可
 
-MIT
+[MIT](LICENSE) © 2026 Daniel Shuguang

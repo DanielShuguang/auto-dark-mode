@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# 同一分支只保留最新一次，push 多次时自动取消旧任务
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      # 只缓存 src-tauri 的 target 目录，配合 Cargo.lock 精确失效
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: 安装依赖
+        run: pnpm install --frozen-lockfile
+
+      - name: 类型检查（vue-tsc）
+        run: pnpm typecheck
+
+      - name: 前端构建（含图标生成）
+        run: pnpm build
+
+      - name: Rust 单元测试
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
+      # clippy 只作提示，不因 warning 阻塞（FFI 代码里 warning 较多）
+      - name: Clippy
+        run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets
+
+      - name: 产物检查
+        run: |
+          if (-not (Test-Path "dist/index.html")) { throw "dist 为空，前端构建失败" }
+          Get-ChildItem dist, dist/assets | Select-Object Name, Length
+        shell: pwsh
