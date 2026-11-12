@@ -1,0 +1,7 @@
+# 统一换行，避免 Windows/macOS 之间反复出现整个文件被改的假 diff
+* text=auto eol=lf
+
+# 二进制资源
+*.png binary
+*.ico binary
+*.exe binary

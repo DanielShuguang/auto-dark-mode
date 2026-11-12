@@ -1,0 +1,192 @@
+/*
+ * 全局基础样式：只做三件事 —— 定义主题变量、页面骨架、首帧防闪白。
+ * 其余全部交给 UnoCSS 原子类（uno.config.ts 里把颜色映射到了这些变量）。
+ */
+
+:root {
+  --bg: #f6f7f9;
+  --card: #ffffff;
+  --field: #ffffff;
+  --text: #1a1a1a;
+  --muted: #6b7280;
+  --line: #e3e6ea;
+  --accent: #2f6fed;
+  --accent-soft: #e8efff;
+  --danger: #c0392b;
+  color-scheme: light;
+}
+
+/*
+ * 深色配色。
+ * - `<html data-theme="dark">`：由脚本按「注册表里真实生效的主题」强制指定，
+ *   这样应用自己的界面和它切换的系统主题永远一致。
+ * - `@media (prefers-color-scheme: dark)`：脚本执行前（首帧）先用系统偏好垫一下，
+ *   避免深色系统上闪一下白底。`data-theme` 一旦被写好，规则集就由脚本接管。
+ */
+[data-theme="dark"] {
+  --bg: #1b1d21;
+  --card: #24262b;
+  --field: #2a2d33;
+  --text: #e8eaed;
+  --muted: #9aa1a9;
+  --line: #35383d;
+  --accent: #6f9bff;
+  --accent-soft: #22304d;
+  --danger: #ff6b5e;
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1d21;
+    --card: #24262b;
+    --field: #2a2d33;
+    --text: #e8eaed;
+    --muted: #9aa1a9;
+    --line: #35383d;
+    --accent: #6f9bff;
+    --accent-soft: #22304d;
+    --danger: #ff6b5e;
+    color-scheme: dark;
+  }
+}
+
+/*
+ * 最小重置：UnoCSS 不自带 preflight，缺了 border-box 会让
+ * 「h-full + padding」的元素撑出视口，页脚被挤出屏幕。
+ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  overflow: hidden;
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI Variable Text", "Segoe UI", "Microsoft YaHei UI", system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+  user-select: none;
+}
+
+/*
+ * 表单控件重置。
+ * UnoCSS 不带 preflight，<button>/<input>/<select> 会保留系统原生外观：
+ * 按钮的立体描边、数字框的上下箭头、时间框的内阴影，深色下还会突然变白。
+ * 这里只负责「去掉原生外观」，配色/圆角/间距仍由 UnoCSS 的 field、btn-* 决定。
+ */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+  /*
+   * 关键：这里必须给出「1px 实线透明」而不是 `border: 0`。
+   * UnoCSS 没有 preflight，`border` 原子类只写 border-width，
+   * 线型默认是 none；直接归零会让 `border border-line` 一条线都画不出来。
+   */
+  border: 1px solid transparent;
+  border-radius: 7px;
+}
+
+button {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: transparent;
+  padding: 0;
+}
+
+input,
+textarea,
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: transparent;
+  outline: none;
+}
+
+/* 数字框的上下箭头、搜索框的清除按钮，都是系统控件，去掉 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button,
+input[type="search"]::-webkit-search-cancel-button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* 时间框内部的时分段编辑器会自己画一层边和内阴影 */
+input[type="time"]::-webkit-datetime-edit {
+  padding: 0;
+}
+input[type="time"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 0.5;
+  margin-left: 2px;
+}
+input[type="time"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 0.9;
+}
+
+/* 下拉框自绘箭头，保证深浅色都清楚 */
+select {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23888b91' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 7px center;
+  background-size: 10px 6px;
+  padding-right: 22px;
+}
+
+/* 复选框：自绘方形勾选框，跟随主题强调色 */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  flex: none;
+  display: inline-grid;
+  place-content: center;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--field);
+  cursor: pointer;
+  transition: background-color 0.12s, border-color 0.12s;
+}
+input[type="checkbox"]::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  transform: scale(0);
+  transition: transform 0.12s ease-out;
+  background: #fff;
+  clip-path: polygon(14% 44%, 0 62%, 40% 100%, 100% 16%, 84% 0%, 40% 62%);
+}
+input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+input[type="checkbox"]:checked::before {
+  transform: scale(1);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent-soft);
+  outline-offset: 1px;
+}
+

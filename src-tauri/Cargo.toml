@@ -1,0 +1,32 @@
+[package]
+name = "auto-dark-mode"
+version = "0.1.0"
+description = "Windows 11 自动深浅色切换"
+authors = ["AutoDarkMode"]
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "auto_dark_mode_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon"] }
+tauri-plugin-autostart = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[features]
+# 生产构建必须带这个 feature，否则 Tauri 会认为自己是 dev 模式、去连 devUrl，
+# 打出来的 exe 双击后只会显示「127.0.0.1 拒绝连接」。
+# `tauri build` 会自动加上；直接 `cargo build --release` 时必须手动带。
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true

@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "主窗口默认权限（开机自启等能力由 Rust 后端直接调用，不经过前端）",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}
